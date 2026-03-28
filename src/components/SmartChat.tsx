@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { MessageSquare, X, Send, Sparkles, Loader2, Bot } from 'lucide-react';
 import { GoogleGenAI, Type } from "@google/genai";
-import { Memory, Album } from '../lib/gemini';
+import { Memory, Album, getAI } from '../lib/gemini';
 
 interface SmartChatProps {
   memories: Memory[];
@@ -39,7 +39,7 @@ export default function SmartChat({ memories, onSuggestAlbum }: SmartChatProps) 
     setIsLoading(true);
 
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+      const ai = getAI();
       
       const response = await ai.models.generateContent({
         model: "gemini-3-flash-preview",
@@ -95,9 +95,12 @@ export default function SmartChat({ memories, onSuggestAlbum }: SmartChatProps) 
       } else {
         setMessages(prev => [...prev, { role: 'bot', content: data.message }]);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Chat Error:", error);
-      setMessages(prev => [...prev, { role: 'bot', content: "I'm sorry, I had a bit of trouble recalling that. Could you try again?" }]);
+      const errorMessage = error.message?.includes("API Key") 
+        ? "I need a valid Gemini API key to help you. Please check your settings (gear icon)."
+        : "I'm sorry, I had a bit of trouble recalling that. Could you try again?";
+      setMessages(prev => [...prev, { role: 'bot', content: errorMessage }]);
     } finally {
       setIsLoading(false);
     }

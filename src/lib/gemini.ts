@@ -1,20 +1,43 @@
 import { GoogleGenAI, Type } from "@google/genai";
 
-const getAI = () => {
-  // Priority: 
-  // 1. LocalStorage (user-provided at runtime)
-  // 2. import.meta.env.VITE_GEMINI_API_KEY (Vercel/Standard Vite env)
-  // 3. process.env.GEMINI_API_KEY (AI Studio injected)
+export const getAI = () => {
+  // Priority:
+  // 1. VITE_GEMINI_API_KEY — set this in Vercel project settings as an Environment Variable
+  // 2. LocalStorage — user-provided at runtime via the in-app settings (gear icon)
+  // 3. GEMINI_API_KEY — legacy AI Studio injected env var (build-time baked via vite define)
   
+  const viteEnvKey = import.meta.env.VITE_GEMINI_API_KEY;
   const localStorageKey = typeof window !== 'undefined' ? localStorage.getItem('REMINIQ_GEMINI_API_KEY') : null;
-  const viteEnvKey = (import.meta as any).env?.VITE_GEMINI_API_KEY;
-  const processEnvKey = process.env.GEMINI_API_KEY;
 
-  const apiKey = localStorageKey || viteEnvKey || processEnvKey;
-
-  if (!apiKey || apiKey === "undefined" || apiKey === "MY_GEMINI_API_KEY") {
-    throw new Error("Gemini API Key is missing. Please set VITE_GEMINI_API_KEY in your environment or provide it in the app settings.");
+  // Safely access process.env.GEMINI_API_KEY which may be baked in at build time by Vite's define
+  let processEnvKey: string | undefined;
+  try {
+    processEnvKey = process.env.GEMINI_API_KEY;
+  } catch (e) {
+    // process is not defined in browser
   }
+
+  const cleanKey = (key: any): string | null => {
+    if (!key || key === "undefined" || key === "null" || key === "MY_GEMINI_API_KEY") return null;
+    return String(key);
+  };
+
+  const apiKey = cleanKey(viteEnvKey) || cleanKey(localStorageKey) || cleanKey(processEnvKey);
+
+  if (!apiKey) {
+    console.error("Gemini API Key is missing. Sources checked:", {
+      viteEnv: !!cleanKey(viteEnvKey),
+      localStorage: !!cleanKey(localStorageKey),
+      processEnv: !!cleanKey(processEnvKey),
+    });
+    throw new Error(
+      "Gemini API Key is missing.\n\n" +
+      "On Vercel: add VITE_GEMINI_API_KEY to your project's Environment Variables.\n" +
+      "Locally: add VITE_GEMINI_API_KEY=\"your-key\" to a .env file.\n" +
+      "Or set it at runtime via the gear icon in the app."
+    );
+  }
+
   return new GoogleGenAI({ apiKey });
 };
 
@@ -94,7 +117,7 @@ export async function sortMemoriesIntoAlbums(memories: Memory[]): Promise<Album[
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3.1-pro-preview",
+      model: "gemini-2.0-flash", // Stable public model — works outside AI Studio
       contents: [
         {
           role: "user",
@@ -138,13 +161,22 @@ export async function sortMemoriesIntoAlbums(memories: Memory[]): Promise<Album[
       }
     });
 
+    if (!response.text) {
+      throw new Error("Empty response from Gemini. This might be due to safety filters or an invalid API key.");
+    }
+
     const albumsData = JSON.parse(response.text);
     return albumsData.map((a: any) => ({
       id: Math.random().toString(36).substr(2, 9),
       ...a
     }));
-  } catch (error) {
+  } catch (error: any) {
     console.error("Gemini sorting error:", error);
+    // Rethrow with a more descriptive message if possible
+    const message = error.message || "Unknown error during sorting";
+    if (message.includes("API_KEY") || message.includes("permission") || message.includes("key") || message.includes("not found")) {
+      throw new Error(`Gemini API Error: ${message}`);
+    }
     return [];
   }
 }
@@ -164,20 +196,27 @@ export async function searchMemories(query: string, memories: Memory[]) {
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: `
-        You are the librarian of "Reminiq". 
-        A user is searching for a memory with the query: "${query}".
-        
-        Here are the memories in their vault:
-        ${JSON.stringify(memoryContext)}
-        
-        Find the most relevant memory. If you find one, return a JSON object with:
-        1. "intro": A poetic, nostalgic one-sentence introduction to the memory (e.g., "I found a golden afternoon from last autumn...").
-        2. "memoryId": The ID of the matching memory.
-        
-        If no memory matches well, return a JSON object with "intro": "I couldn't find that specific moment, but your vault is still full of stories." and "memoryId": null.
-      `,
+      model: "gemini-2.0-flash", // Stable public model — works outside AI Studio
+      contents: [
+        {
+          role: "user",
+          parts: [
+            {
+              text: `You are the librarian of "Reminiq". 
+              A user is searching for a memory with the query: "${query}".
+              
+              Here are the memories in their vault:
+              ${JSON.stringify(memoryContext)}
+              
+              Find the most relevant memory. If you find one, return a JSON object with:
+              1. "intro": A poetic, nostalgic one-sentence introduction to the memory (e.g., "I found a golden afternoon from last autumn...").
+              2. "memoryId": The ID of the matching memory.
+              
+              If no memory matches well, return a JSON object with "intro": "I couldn't find that specific moment, but your vault is still full of stories." and "memoryId": null.`
+            }
+          ]
+        }
+      ],
       config: {
         responseMimeType: "application/json",
         responseSchema: {
@@ -191,9 +230,14 @@ export async function searchMemories(query: string, memories: Memory[]) {
       }
     });
 
+    if (!response.text) return null;
     return JSON.parse(response.text);
-  } catch (error) {
+  } catch (error: any) {
     console.error("Gemini search error:", error);
+    const message = error.message || "Unknown error during search";
+    if (message.includes("API_KEY") || message.includes("permission") || message.includes("key") || message.includes("not found")) {
+      throw new Error(`Gemini API Error: ${message}`);
+    }
     return null;
   }
 }

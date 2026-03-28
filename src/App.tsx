@@ -164,10 +164,16 @@ export default function App() {
     setIsSorting(true);
     try {
       const sortedAlbums = await sortMemoriesIntoAlbums(memories);
-      setAlbums(sortedAlbums);
-      setActiveOverlay('albums');
-    } catch (error) {
+      if (sortedAlbums.length === 0) {
+        setToast({ message: "AI couldn't find distinct groups for these memories. Try adding more context or photos.", type: 'error' });
+      } else {
+        setAlbums(sortedAlbums);
+        setActiveOverlay('albums');
+        setToast({ message: "Memories sorted into albums successfully.", type: 'success' });
+      }
+    } catch (error: any) {
       console.error("Sorting failed:", error);
+      setToast({ message: error.message || "Sorting failed. Please check your API key and connection.", type: 'error' });
     } finally {
       setIsSorting(false);
     }
@@ -204,13 +210,29 @@ export default function App() {
 
   const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
   const [apiKey, setApiKey] = useState(localStorage.getItem('REMINIQ_GEMINI_API_KEY') || '');
+  const [toast, setToast] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
+
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
 
   const saveApiKey = (key: string) => {
     localStorage.setItem('REMINIQ_GEMINI_API_KEY', key);
     setApiKey(key);
     setIsApiKeyModalOpen(false);
+    setToast({ message: 'API Key saved successfully. Refreshing...', type: 'success' });
     // Reload to ensure the new key is picked up by getAI
-    window.location.reload();
+    setTimeout(() => window.location.reload(), 1500);
+  };
+
+  const clearApiKey = () => {
+    localStorage.removeItem('REMINIQ_GEMINI_API_KEY');
+    setApiKey('');
+    setToast({ message: 'API Key cleared. Using environment variables if available.', type: 'success' });
+    setTimeout(() => window.location.reload(), 1500);
   };
 
   return (
@@ -311,12 +333,22 @@ export default function App() {
                     className="w-full bg-white/50 border border-brown/20 p-3 rounded-sm font-mono text-sm focus:outline-none focus:border-moss"
                   />
                 </div>
-                <button 
-                  onClick={() => saveApiKey(apiKey)}
-                  className="w-full py-3 bg-moss text-cream font-hand text-lg tracking-wider rounded-sm hover:bg-dark-brown transition-colors"
-                >
-                  Save Key
-                </button>
+                <div className="flex gap-2">
+                  <button 
+                    onClick={() => saveApiKey(apiKey)}
+                    className="flex-1 py-3 bg-moss text-cream font-hand text-lg tracking-wider rounded-sm hover:bg-dark-brown transition-colors"
+                  >
+                    Save Key
+                  </button>
+                  {localStorage.getItem('REMINIQ_GEMINI_API_KEY') && (
+                    <button 
+                      onClick={clearApiKey}
+                      className="px-4 py-3 bg-red-900/10 text-red-900 font-hand text-lg rounded-sm hover:bg-red-900/20 transition-colors"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
                 <p className="text-[10px] text-brown/40 text-center">
                   Your key is stored locally in your browser and never sent to our servers.
                   Get a free key at <a href="https://aistudio.google.com/app/apikey" target="_blank" className="underline">AI Studio</a>.
@@ -324,6 +356,23 @@ export default function App() {
               </div>
             </motion.div>
           </div>
+        )}
+      </AnimatePresence>
+
+      {/* Toast Notification */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div 
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 50 }}
+            className={`fixed bottom-24 left-1/2 -translate-x-1/2 z-[20000] px-6 py-3 rounded-full shadow-2xl font-hand text-lg flex items-center gap-3 border ${
+              toast.type === 'error' ? 'bg-red-50 text-red-900 border-red-200' : 'bg-moss text-cream border-moss/20'
+            }`}
+          >
+            {toast.type === 'error' ? '✕' : '✓'}
+            {toast.message}
+          </motion.div>
         )}
       </AnimatePresence>
 
