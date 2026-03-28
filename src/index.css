@@ -1,0 +1,125 @@
+@import "tailwindcss";
+
+@theme {
+  --font-serif: 'Playfair Display', serif;
+  --font-body: 'Lora', serif;
+  --font-hand: 'Caveat', cursive;
+  --font-classic: 'IM Fell English', serif;
+
+  --color-cream: #f2e8d5;
+  --color-warm-white: #f7f1e6;
+  --color-parchment: #e6dcc5;
+  --color-light-brown: #bfa68a;
+  --color-brown: #7d6348;
+  --color-dark-brown: #4a342a;
+  --color-sage: #8a9e7b;
+  --color-moss: #6b7c5e;
+  --color-dusty-rose: #c9a0a0;
+  --color-faded-yellow: #e8d890;
+  --color-ink: #1a1a1a;
+  --color-soft-black: #0a0a0a;
+  --color-film-orange: #ff6600;
+  --color-checkered-green: #6b7c5e;
+  --color-checkered-white: #f7f1e6;
+}
+
+@layer base {
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400;1,600&family=Lora:ital,wght@0,400;0,500;1,400&family=Caveat:wght@400;600&family=IM+Fell+English:ital@0;1&family=Orbitron:wght@400;700&display=swap');
+
+  body {
+    @apply bg-cream text-ink font-body overflow-x-hidden;
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Ccircle cx='10' cy='10' r='4' fill='%236b7c5e' opacity='0.7'/%3E%3Ccircle cx='10' cy='10' r='8' stroke='%234a342a' stroke-width='1' fill='none' opacity='0.4'/%3E%3C/svg%3E") 10 10, auto;
+  }
+
+  /* Immersive Desk Background */
+  body::before {
+    content: '';
+    @apply fixed inset-0 z-[-1] pointer-events-none;
+    background: 
+      /* Checkered Blanket Pattern (Bottom Right) */
+      radial-gradient(circle at 100% 100%, rgba(107, 124, 94, 0.05) 0%, transparent 40%),
+      /* Wooden Texture (Top Right) */
+      linear-gradient(45deg, rgba(74, 52, 42, 0.03) 25%, transparent 25%, transparent 50%, rgba(74, 52, 42, 0.03) 50%, rgba(74, 52, 42, 0.03) 75%, transparent 75%, transparent),
+      /* Paper Texture Overlay */
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    background-size: 100% 100%, 40px 40px, auto;
+  }
+
+  /* Checkered Pattern Utility */
+  .bg-checkered {
+    background-image: 
+      linear-gradient(45deg, var(--color-checkered-green) 25%, transparent 25%), 
+      linear-gradient(-45deg, var(--color-checkered-green) 25%, transparent 25%), 
+      linear-gradient(45deg, transparent 75%, var(--color-checkered-green) 75%), 
+      linear-gradient(-45deg, transparent 75%, var(--color-checkered-green) 75%);
+    background-size: 40px 40px;
+    background-position: 0 0, 0 20px, 20px -20px, -20px 0px;
+    background-color: var(--color-checkered-white);
+    opacity: 0.15;
+  }
+}
+
+@layer utilities {
+  .torn-edge-top {
+    clip-path: polygon(0 100%, 3% 20%, 6% 80%, 9% 10%, 12% 70%, 15% 30%, 18% 90%, 21% 15%, 24% 75%, 27% 40%, 30% 85%, 33% 20%, 36% 65%, 39% 10%, 42% 80%, 45% 35%, 48% 75%, 51% 20%, 54% 60%, 57% 5%, 60% 70%, 63% 30%, 66% 80%, 69% 15%, 72% 65%, 75% 30%, 78% 85%, 81% 20%, 84% 75%, 87% 40%, 90% 80%, 93% 25%, 96% 70%, 100% 15%, 100% 100%);
+  }
+  
+  .torn-edge-bottom {
+    clip-path: polygon(0 0, 100% 0, 100% 85%, 97% 30%, 94% 80%, 91% 25%, 88% 85%, 85% 60%, 82% 75%, 79% 15%, 76% 80%, 73% 35%, 70% 85%, 67% 20%, 64% 75%, 61% 15%, 58% 90%, 55% 35%, 52% 80%, 49% 25%, 46% 85%, 43% 40%, 40% 90%, 37% 15%, 34% 70%, 31% 25%, 28% 85%, 25% 40%, 22% 80%, 19% 15%, 16% 75%, 13% 30%, 10% 85%, 7% 20%, 4% 80%, 0 15%);
+  }
+
+  .film-grain {
+    @apply fixed inset-0 z-[9000] pointer-events-none opacity-[0.08];
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23g)'/%3E%3C/svg%3E");
+    animation: grain-shift 0.08s steps(1) infinite;
+  }
+
+  .spotify-glow {
+    box-shadow: 0 0 30px rgba(107, 124, 94, 0.2);
+  }
+
+  .animate-spin-slow {
+    animation: spin 8s linear infinite;
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  .date-stamp {
+    font-family: 'Orbitron', sans-serif;
+    @apply text-film-orange uppercase tracking-tighter opacity-80;
+    text-shadow: 0 0 2px rgba(255, 102, 0, 0.5);
+  }
+
+  .light-leak {
+    @apply fixed inset-0 z-[8999] pointer-events-none opacity-30;
+    background: radial-gradient(circle at 0% 0%, rgba(255, 100, 0, 0.2) 0%, transparent 50%),
+                radial-gradient(circle at 100% 100%, rgba(255, 0, 100, 0.1) 0%, transparent 50%);
+  }
+
+  @keyframes grain-shift {
+    0%  { background-position: 0 0; }
+    25% { background-position: -20px -30px; }
+    50% { background-position: 15px 25px; }
+    75% { background-position: -10px 15px; }
+    100%{ background-position: 5px -20px; }
+  }
+
+  /* Custom Scrollbar for Spotify feel */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.2);
+  }
+}
+
