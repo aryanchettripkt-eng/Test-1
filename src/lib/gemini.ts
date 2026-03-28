@@ -172,12 +172,9 @@ export async function sortMemoriesIntoAlbums(memories: Memory[]): Promise<Album[
     }));
   } catch (error: any) {
     console.error("Gemini sorting error:", error);
-    // Rethrow with a more descriptive message if possible
-    const message = error.message || "Unknown error during sorting";
-    if (message.includes("API_KEY") || message.includes("permission") || message.includes("key") || message.includes("not found")) {
-      throw new Error(`Gemini API Error: ${message}`);
-    }
-    return [];
+    // Always rethrow so the real error message reaches the UI
+    const message = error.message || "Unknown error during AI sorting";
+    throw new Error(`AI sorting failed: ${message}`);
   }
 }
 
