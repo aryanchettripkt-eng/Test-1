@@ -1,20 +1,24 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Reminiq
 
-# Run and deploy your AI Studio app
+A personal memory journal app powered by Groq AI.
 
-This contains everything you need to run your app locally.
+## Setup
 
-View your app in AI Studio: https://ai.studio/apps/da987604-7f12-4a57-afdd-0e97fc390d68
+1. Get a free API key at https://console.groq.com/keys
+2. Create a `.env` file and add:
+   ```
+   VITE_GROQ_API_KEY=your-key-here
+   ```
+3. Run locally:
+   ```
+   npm install
+   npm run dev
+   ```
 
-## Run Locally
+## Deploying to Vercel
 
-**Prerequisites:**  Node.js
-
-
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+1. Push this project to a GitHub repo
+2. Import it on vercel.com
+3. In **Settings → Environment Variables**, add:
+   - `VITE_GROQ_API_KEY` = your Groq key
+4. Deploy
